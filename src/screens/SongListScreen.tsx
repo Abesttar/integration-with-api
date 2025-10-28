@@ -1,51 +1,114 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, Image, ActivityIndicator, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+  ImageBackground,
+  Dimensions,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../../App";
+import LinearGradient from "react-native-linear-gradient";
 
-export default function SongScreen() {
+const { width } = Dimensions.get("window");
+
+export default function SongListScreen() {
   const [songs, setSongs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   useEffect(() => {
-    fetch("https://api.deezer.com/search?q=eminem")
-      .then((res) => res.json())
-      .then((data) => {
-        setSongs(data.data);
+    const fetchSongs = async () => {
+      try {
+        setError(null);
+        const res = await fetch(
+          "https://itunes.apple.com/search?term=andmesh&entity=song&limit=20"
+        );
+        const data = await res.json();
+        if (Array.isArray(data.results)) {
+          setSongs(data.results);
+        } else {
+          throw new Error("Invalid data format");
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    };
+    fetchSongs();
   }, []);
 
-  if (loading) return <ActivityIndicator size="large" color="#007AFF" style={{ flex: 1 }} />;
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#A855F7" />
+        <Text style={styles.text}>Loading Andmesh songs...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.error}>Failed to load songs: {error}</Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
+    <LinearGradient colors={["#D8B4FE", "#93C5FD"]} style={{ flex: 1 }}>
       <FlatList
         data={songs}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.trackId.toString()}
+        contentContainerStyle={{ padding: 16 }}
         renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Image source={{ uri: item.album.cover_small }} style={styles.image} />
-            <View style={{ marginLeft: 10 }}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text>{item.artist.name}</Text>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() =>
+              navigation.navigate("SongDetail", {
+                id: item.trackId.toString(),
+                title: item.trackName,
+              })
+            }
+          >
+            <Image source={{ uri: item.artworkUrl100 }} style={styles.image} />
+            <View style={styles.info}>
+              <Text style={styles.title}>{item.trackName}</Text>
+              <Text style={styles.artist}>{item.artistName}</Text>
+              <Text style={styles.album}>{item.collectionName}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
         )}
       />
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10, backgroundColor: "#fff" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  text: { color: "#fff", fontSize: 16, marginTop: 10 },
+  error: { color: "#ef4444", textAlign: "center", fontSize: 14, marginTop: 20 },
   card: {
     flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 8,
-    backgroundColor: "#f2f2f2",
-    borderRadius: 8,
-    padding: 8,
+    backgroundColor: "rgba(255,255,255,0.85)",
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  image: { width: 50, height: 50, borderRadius: 8 },
-  title: { fontWeight: "bold", fontSize: 14 },
+  image: { width: 80, height: 80, borderRadius: 12 },
+  info: { flex: 1, marginLeft: 12, justifyContent: "center" },
+  title: { fontSize: 16, fontWeight: "700", color: "#1E3A8A" },
+  artist: { fontSize: 13, color: "#6B21A8", marginTop: 2 },
+  album: { fontSize: 12, color: "#4B5563", marginTop: 2 },
 });

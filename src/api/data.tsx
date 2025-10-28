@@ -1,25 +1,30 @@
-export type Film = {
-  id: string;
+export type MarvelMovie = {
+  id: number;
   title: string;
-  original_title: string;
-  description: string;
-  director: string;
-  producer: string;
-  release_date: string; 
-  running_time: string; 
-  rt_score: string;     
-  image?: string;       
-  movie_banner?: string;
+  release_date: string;
+  box_office: string;
+  duration: string;
+  overview: string;
+  directed_by: string;
+  cover_url: string;
+  trailer_url: string;
+  phase: number;
+  saga: string;
 };
 
-export async function getFilms(): Promise<Film[]> {
-  const res = await fetch(`https://ghibliapi.vercel.app/films`);
-  if (!res.ok) throw new Error('Failed to fetch films');
-  return res.json();
+const BASE_URL = "https://mcuapi.vercel.app/api/v1";
+
+export async function getFilms(): Promise<MarvelMovie[]> {
+  const res = await fetch(`${BASE_URL}/movies`);
+  if (!res.ok) throw new Error("Failed to fetch Marvel movies");
+  const json = await res.json();
+  // API MCU format: { data: [ {...}, {...} ] }
+  return json.data;
 }
 
-export async function getFilmById(id: string): Promise<Film> {
-  const res = await fetch(`https://ghibliapi.vercel.app/films/${id}`);
-  if (!res.ok) throw new Error('Failed to fetch film');
-  return res.json();
+export async function getFilmById(id: string): Promise<MarvelMovie> {
+  const res = await fetch(`${BASE_URL}/movies/${id}`);
+  if (!res.ok) throw new Error("Failed to fetch movie detail");
+  const json = await res.json();
+  return json;
 }

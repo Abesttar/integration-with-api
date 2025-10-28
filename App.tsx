@@ -6,15 +6,15 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import MovieListScreen from './src/screens/MovieListScreen';
 import MovieDetailScreen from './src/screens/MovieDetailScreen';
-import SongListScreen from './src/screens/SongListScreen'; // nanti kita buat file ini
+import SongListScreen from './src/screens/SongListScreen';
+import SongDetailScreen from './src/screens/SongDetailScreen';
 
-// --- Type untuk navigasi stack ---
 export type RootStackParamList = {
   Tabs: undefined;
   MovieDetail: { id: string; title?: string };
+  SongDetail: { id: string; title?: string };
 };
 
-// --- Type untuk Tab Navigator ---
 export type TabParamList = {
   Movies: undefined;
   Songs: undefined;
@@ -23,7 +23,6 @@ export type TabParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
-// --- Komponen untuk Tab Navigator ---
 function TabNavigator() {
   return (
     <Tab.Navigator
@@ -50,7 +49,6 @@ function TabNavigator() {
   );
 }
 
-// --- Root Stack ---
 export default function App() {
   return (
     <NavigationContainer>
@@ -63,7 +61,12 @@ export default function App() {
         <Stack.Screen
           name="MovieDetail"
           component={MovieDetailScreen}
-          options={({ route }) => ({ title: route.params?.title || 'Detail' })}
+          options={({ route }) => ({ title: route.params?.title || 'Movie Detail' })}
+        />
+        <Stack.Screen
+          name="SongDetail"
+          component={SongDetailScreen}
+          options={({ route }) => ({ title: route.params?.title || 'Song Detail' })}
         />
       </Stack.Navigator>
     </NavigationContainer>

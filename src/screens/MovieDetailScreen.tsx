@@ -1,83 +1,89 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  ActivityIndicator,
+  StyleSheet,
+  ImageBackground,
+} from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { getFilmById, Film } from '../api/data';
 import type { RootStackParamList } from '../../App';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+
+const API_KEY = '598a586f770f0053a82cd327bce1c774';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MovieDetail'>;
 
 export default function MovieDetailScreen({ route }: Props) {
   const { id } = route.params;
-  const [film, setFilm] = useState<Film | null>(null);
+  const [movie, setMovie] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    (async () => {
-      try {
-        setError(null);
-        const data = await getFilmById(id);
-        setFilm(data);
-      } catch (e: any) {
-        setError(e.message || 'Failed to load detail');
-      } finally {
-        setLoading(false);
-      }
-    })();
+    const fetchMovieDetail = async () => {
+      const res = await fetch(
+        `https://api.themoviedb.org/3/movie/${id}?api_key=${API_KEY}&language=en-US`
+      );
+      const data = await res.json();
+      setMovie(data);
+      setLoading(false);
+    };
+    fetchMovieDetail();
   }, [id]);
 
-  if (loading) {
+  if (loading || !movie)
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
-        <Text style={styles.muted}>Loading detail…</Text>
+        <ActivityIndicator size="large" color="#E50914" />
+        <Text style={styles.text}>Loading movie detail...</Text>
       </View>
     );
-  }
-
-  if (error || !film) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.error}>Error: {error ?? 'Not found'}</Text>
-      </View>
-    );
-  }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {film.movie_banner ? (
-        <Image source={{ uri: film.movie_banner }} style={styles.banner} />
-      ) : film.image ? (
-        <Image source={{ uri: film.image }} style={styles.banner} />
-      ) : null}
-
-      <View style={styles.section}>
-        <Text style={styles.title}>{film.title}</Text>
+    <ImageBackground
+      source={require('../../assets/marvel1-bg.jpg')} 
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <ScrollView contentContainerStyle={styles.overlay}>
+        {movie.backdrop_path && (
+          <Image
+            source={{ uri: `https://image.tmdb.org/t/p/w780${movie.backdrop_path}` }}
+            style={styles.banner}
+          />
+        )}
+        <Text style={styles.title}>{movie.title}</Text>
         <Text style={styles.subtitle}>
-          Release: {film.release_date} • Runtime: {film.running_time}m • Score: {film.rt_score}
+          <Ionicons name="calendar-outline" size={14} /> {movie.release_date} | ⭐{' '}
+          {movie.vote_average?.toFixed(1)}
         </Text>
-        <Text style={styles.subtitle}>
-          Director: {film.director} • Producer: {film.producer}
-        </Text>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.heading}>Synopsis</Text>
-        <Text style={styles.body}>{film.description}</Text>
-      </View>
-    </ScrollView>
+        <Text style={styles.heading}>Overview</Text>
+        <Text style={styles.body}>{movie.overview || 'No description available.'}</Text>
+      </ScrollView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 },
-  muted: { color: '#6B7280', marginTop: 8 },
-  error: { color: '#ef4444', fontWeight: '600' },
-  container: { paddingBottom: 24 },
-  banner: { width: '100%', height: 220, backgroundColor: '#111827' },
-  section: { paddingHorizontal: 16, paddingTop: 16 },
-  title: { fontSize: 24, fontWeight: '800' },
-  subtitle: { color: '#6B7280', marginTop: 6 },
-  heading: { fontSize: 18, fontWeight: '700', marginBottom: 6 },
-  body: { lineHeight: 20, color: '#111827' },
+  background: { flex: 1 },
+  overlay: {
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    padding: 16,
+    flexGrow: 1,
+  },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  text: { color: '#ccc', marginTop: 8 },
+  banner: { width: '100%', height: 220, borderRadius: 12, marginBottom: 12 },
+  title: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#fff',
+    textShadowColor: '#E50914',
+    textShadowRadius: 10,
+  },
+  subtitle: { color: '#aaa', marginVertical: 8 },
+  heading: { fontSize: 18, fontWeight: '700', color: '#E50914', marginTop: 16 },
+  body: { color: '#ddd', lineHeight: 22 },
 });
